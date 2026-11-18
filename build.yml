@@ -1,0 +1,26 @@
+name: Build APK
+on: [push, workflow_dispatch]
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 17 }
+      - uses: gradle/actions/setup-gradle@v4
+        with: { gradle-version: 8.9 }
+      - name: Proje yapisi
+        run: |
+          mkdir -p p/app/src/main/kotlin/com/vrbox/ar p/app/src/main/assets
+          cp settings.gradle.kts p/settings.gradle.kts
+          cp root.gradle.kts p/build.gradle.kts
+          cp app.gradle.kts p/app/build.gradle.kts
+          cp AndroidManifest.xml p/app/src/main/AndroidManifest.xml
+          cp MainActivity.kt p/app/src/main/kotlin/com/vrbox/ar/MainActivity.kt
+          echo "android.useAndroidX=true" > p/gradle.properties
+          curl -L -o p/app/src/main/assets/hand_landmarker.task https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task
+      - run: cd p && gradle assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vrbox-ar-apk
+          path: p/app/build/outputs/apk/debug/app-debug.apk
